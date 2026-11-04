@@ -1,6 +1,8 @@
 # MM SLA Escrow (web app)
 
-A web app on top of the [`MarketMakerSLA`](../contracts/mm_sla_escrow.py) Intelligent Contract. A token project locks a market maker's retainer, the term is cut into time slots, anyone can press **Check** during a slot, and GenLayer validators each read the live Upbit or Bithumb order book and record whether the agreed spread and depth were there. At the end, **Settle** pays the market maker the share of slots that passed and returns the rest to the project.
+**Live app:** https://zldqms6.github.io/mm-sla-app/
+
+A web app on top of the [`MarketMakerSLA`](contracts/mm_sla_escrow.py) Intelligent Contract. A token project locks a market maker's retainer, the term is cut into time slots, anyone can press **Check** during a slot, and GenLayer validators each read the live Upbit or Bithumb order book and record whether the agreed spread and depth were there. At the end, **Settle** pays the market maker the share of slots that passed and returns the rest to the project.
 
 Live contract on Studionet: [`0xC148A44089a37209585e9Ef57c2cf3585133F680`](https://explorer-studio.genlayer.com/address/0xC148A44089a37209585e9Ef57c2cf3585133F680)
 
