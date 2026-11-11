@@ -1,8 +1,8 @@
 {
-  "contract": "0xC148A44089a37209585e9Ef57c2cf3585133F680",
+  "contract": "0x7826B076CC17E33d5a6f3F86Ab7Af0cE9492c327",
   "network": "studionet",
-  "project": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A",
-  "mm": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c",
+  "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
+  "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
   "slot_s": 600,
   "n_slots": 1,
   "agreements": [
@@ -16,35 +16,35 @@
         "min_depth_krw": 300000000,
         "min_uptime_pct": 75
       },
-      "id": 8,
-      "start": 1793772483,
+      "id": 4,
+      "start": 1794366398,
       "create": {
         "ok": true,
-        "hash": "0x04e1724b4c512957f40e4b2c3d70c6bced8c300fae4cba414fc960d04a27a0ed",
+        "hash": "0xd06d1c8ce22a65426bfb6051f95569afad04a33544a74368108f7b09118b9fe8",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
           "IDLE",
-          "IDLE",
           "AGREE",
-          "AGREE"
+          "AGREE",
+          "IDLE"
         ],
-        "returned": "8"
+        "returned": "4"
       },
       "checks": [
         {
           "slot": 0,
           "preview": {
-            "fetchedAt": 1793772506240,
+            "fetchedAt": 1794366425007,
             "levels": 30,
             "obs": {
-              "ts": 1793772506483,
-              "mid": "1717.5",
-              "best_bid": "1717",
-              "best_ask": "1718",
-              "spread_bps": 6,
-              "bid_depth": 1219160123,
-              "ask_depth": 1699696554,
+              "ts": 1794366425323,
+              "mid": "1435.5",
+              "best_bid": "1435",
+              "best_ask": "1436",
+              "spread_bps": 7,
+              "bid_depth": 1037669848,
+              "ask_depth": 2014889028,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": true
@@ -52,54 +52,54 @@
           },
           "tx": {
             "ok": true,
-            "hash": "0xfba086e68a18e81b58b9201dcf03d6c566a552f1c4f8f1798922d8b386ceb5f4",
+            "hash": "0xc643721d91b82f30c1f6a44de77a3031b9f9f9b4281d5a65c55b63a2a0ff0dd8",
             "status": "ACCEPTED",
             "votes": [
               "AGREE",
               "IDLE",
-              "IDLE",
               "AGREE",
+              "IDLE",
               "AGREE"
             ],
-            "returned": "{\"ask_depth\":1685655155\"ask_truncated\":false\"best_ask\":\"1718.0\"\"best_bid\":\"1717.0\"\"bid_depth\":1228757294\"bid_truncated\":false\"checks\":1\"mid\":\"1717.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":6\"ts\":1793772511583}"
+            "returned": "{\"ask_depth\":1981064774\"ask_truncated\":false\"best_ask\":\"1435.0\"\"best_bid\":\"1434.0\"\"bid_depth\":1135013802\"bid_truncated\":false\"checks\":1\"mid\":\"1434.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":7\"ts\":1794366433923}"
           },
-          "seconds": 11,
+          "seconds": 16,
           "slot_state": {
             "status": "pass",
             "checks": 1,
             "obs": {
-              "ts": 1793772511583,
-              "mid": "1717.5",
-              "best_bid": "1717.0",
-              "best_ask": "1718.0",
-              "spread_bps": 6,
-              "bid_depth": 1228757294,
-              "ask_depth": 1685655155,
+              "ts": 1794366433923,
+              "mid": "1434.5",
+              "best_bid": "1434.0",
+              "best_ask": "1435.0",
+              "spread_bps": 7,
+              "bid_depth": 1135013802,
+              "ask_depth": 1981064774,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": true
             },
-            "by": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A"
+            "by": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6"
           }
         }
       ],
       "settle": {
         "ok": true,
-        "hash": "0x2d597ecaff270294393e1acb3c858595b164bb3d967393a39b2731a075b884ae",
+        "hash": "0x7b94ada98387f0fc3a43278d83a5e256e58363dbc696d48e559b9c5d5d64b1cf",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
+          "IDLE",
           "AGREE",
-          "AGREE",
-          "AGREE",
+          "IDLE",
           "AGREE"
         ],
         "returned": "{\"met_minimum\":true\"passed\":1\"slots\":1\"to_mm\":5000000000000000000\"to_project\":0}"
       },
       "final": {
-        "id": 8,
-        "project": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A",
-        "mm": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c",
+        "id": 4,
+        "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
+        "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
         "venue": "upbit",
         "market": "KRW-XRP",
         "terms": {
@@ -109,7 +109,7 @@
           "min_uptime_pct": 75
         },
         "retainer": "5000000000000000000",
-        "start": 1793772483,
+        "start": 1794366398,
         "interval_s": 600,
         "n_slots": 1,
         "passed": 1,
@@ -128,35 +128,35 @@
         "min_depth_krw": 3000000,
         "min_uptime_pct": 75
       },
-      "id": 9,
-      "start": 1793772494,
+      "id": 5,
+      "start": 1794366407,
       "create": {
         "ok": true,
-        "hash": "0xd3279f79901502ca62d4c017e5cf5f05fb6952c6721c18e1d806b94946673027",
+        "hash": "0xb88ed075c1453842bd0a479a24e57be656c635536fa352ebe82195cadb54f973",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
-          "AGREE",
-          "AGREE",
+          "IDLE",
+          "IDLE",
           "AGREE",
           "AGREE"
         ],
-        "returned": "9"
+        "returned": "5"
       },
       "checks": [
         {
           "slot": 0,
           "preview": {
-            "fetchedAt": 1793772520324,
+            "fetchedAt": 1794366443207,
             "levels": 30,
             "obs": {
-              "ts": 1793772518671,
-              "mid": "2.3355",
-              "best_bid": "2.318",
-              "best_ask": "2.353",
-              "spread_bps": 150,
-              "bid_depth": 1072977,
-              "ask_depth": 327248,
+              "ts": 1794366434465,
+              "mid": "2.2015",
+              "best_bid": "2.19",
+              "best_ask": "2.213",
+              "spread_bps": 105,
+              "bid_depth": 6304137,
+              "ask_depth": 19604,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": false
@@ -164,54 +164,54 @@
           },
           "tx": {
             "ok": true,
-            "hash": "0xad08474fae3d256571010ba0ec9a444e5445aa3de0ba6c2f0748312cdde3c2d6",
+            "hash": "0x257428031fea1480c0639aad13095bc62e44552cef3be5c6ed92656197778062",
             "status": "ACCEPTED",
             "votes": [
               "AGREE",
+              "IDLE",
               "AGREE",
-              "IDLE",
-              "IDLE",
-              "AGREE"
+              "AGREE",
+              "IDLE"
             ],
-            "returned": "{\"ask_depth\":327248\"ask_truncated\":false\"best_ask\":\"2.353\"\"best_bid\":\"2.318\"\"bid_depth\":1072977\"bid_truncated\":false\"checks\":1\"mid\":\"2.3355\"\"pass\":false\"slot\":0\"slot_status\":\"fail\"\"spread_bps\":150\"ts\":1793772528067}"
+            "returned": "{\"ask_depth\":19604\"ask_truncated\":false\"best_ask\":\"2.213\"\"best_bid\":\"2.19\"\"bid_depth\":6304137\"bid_truncated\":false\"checks\":1\"mid\":\"2.2015\"\"pass\":false\"slot\":0\"slot_status\":\"fail\"\"spread_bps\":105\"ts\":1794366453667}"
           },
-          "seconds": 36,
+          "seconds": 20,
           "slot_state": {
             "status": "fail",
             "checks": 1,
             "obs": {
-              "ts": 1793772528067,
-              "mid": "2.3355",
-              "best_bid": "2.318",
-              "best_ask": "2.353",
-              "spread_bps": 150,
-              "bid_depth": 1072977,
-              "ask_depth": 327248,
+              "ts": 1794366453667,
+              "mid": "2.2015",
+              "best_bid": "2.19",
+              "best_ask": "2.213",
+              "spread_bps": 105,
+              "bid_depth": 6304137,
+              "ask_depth": 19604,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": false
             },
-            "by": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A"
+            "by": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6"
           }
         }
       ],
       "settle": {
         "ok": true,
-        "hash": "0xf890f9c0b0f39864a96d9549609fb6ec96683d355236b700e6e5bfb3ea5d6bde",
+        "hash": "0x7544e521146765ee850224221fc7a56c01e0b2d3831a9f8ef5afc503a6d580a4",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
-          "IDLE",
           "AGREE",
+          "IDLE",
           "IDLE",
           "AGREE"
         ],
         "returned": "{\"met_minimum\":false\"passed\":0\"slots\":1\"to_mm\":0\"to_project\":5000000000000000000}"
       },
       "final": {
-        "id": 9,
-        "project": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A",
-        "mm": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c",
+        "id": 5,
+        "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
+        "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
         "venue": "bithumb",
         "market": "KRW-SOPH",
         "terms": {
@@ -221,7 +221,7 @@
           "min_uptime_pct": 75
         },
         "retainer": "5000000000000000000",
-        "start": 1793772494,
+        "start": 1794366407,
         "interval_s": 600,
         "n_slots": 1,
         "passed": 0,
