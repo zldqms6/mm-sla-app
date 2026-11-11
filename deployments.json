@@ -1,6 +1,6 @@
 {
   "network": "studionet",
   "deployments": [
-    {"name": "MarketMakerSLA", "address": "0xC148A44089a37209585e9Ef57c2cf3585133F680", "source": "contracts/mm_sla_escrow.py"}
+    {"name": "MarketMakerSLA", "address": "0x7826B076CC17E33d5a6f3F86Ab7Af0cE9492c327", "source": "contracts/mm_sla_escrow.py"}
   ]
 }
