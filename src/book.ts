@@ -117,8 +117,9 @@ export const NEAR_LINE_PCT = 20;
 
 /**
  * Headroom to the thresholds, in % of each threshold: positive = on the passing side.
- * Since v2 every validator must compute the same pass bit from its own fetch, so a book near
- * the line can end with no consensus (nothing recorded) rather than with the leader's verdict.
+ * Since v2 a validator votes for the leader only if it computes the same pass bit from its own
+ * fetch, so a book near the line can end with no consensus (nothing recorded) rather than with
+ * the leader's verdict.
  */
 export function headroom(obs: Observation, terms: Terms): { spreadPct: number; depthPct: number; near: boolean } {
   const spreadPct = ((terms.max_spread_bps - obs.spread_bps) / terms.max_spread_bps) * 100;

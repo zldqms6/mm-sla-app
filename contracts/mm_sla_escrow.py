@@ -31,11 +31,12 @@ own verdict. Validators fetch seconds apart and a thin book can change a lot in 
 time (a 20 s gap moved one-side depth on KRW-SOPH from 0.4M to 9.8M won in the
 fixtures), so a validator does not demand the leader's exact numbers. It does demand
 the leader's exact verdict: the pass bit it computes from its own book must equal the
-leader's. If the book sits so close to the threshold that validators split, the check
-does not reach consensus and records nothing; slot state and the payout can only move
-on a verdict every validator reproduced. (v1 accepted the leader unless the
-validator's book clearly contradicted it, which let a leader choose either verdict
-inside that grey zone. Fixed in milestone 1.)
+leader's, otherwise it votes against. So slot state and the payout only move on a
+verdict that a majority of validators reproduced from their own fetches. If the book
+sits so close to the threshold that too few of them land on the leader's side, the
+check does not reach consensus and records nothing. (v1 accepted the leader unless
+the validator's book clearly contradicted it, which let a leader choose either
+verdict inside that grey zone. Fixed in milestone 1.)
 """
 from genlayer import *
 from dataclasses import dataclass
@@ -212,7 +213,7 @@ def _leader_ok(leader: dict, mine: dict, terms: dict) -> bool:
     if (my_mid > 0) != (mid > 0):
         return False
     # the verdict itself must be reproduced exactly: a validator whose own book gives
-    # the other answer disagrees, so a split moment records nothing
+    # the other answer votes against the leader
     return leader["pass"] is mine["pass"]
 
 

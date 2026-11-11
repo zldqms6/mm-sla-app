@@ -4,6 +4,9 @@ from pathlib import Path
 CONTRACT = "contracts/mm_sla_escrow.py"
 FIX = Path(__file__).parent / "fixtures"
 GEN = 10**18
+# gltest direct mode otherwise takes whatever genvm release is cached or newest; pin the one
+# these tests were written against (downloaded once into ~/.cache/gltest-direct)
+GENVM = "v0.2.16"
 
 # Real order books saved from the public Upbit and Bithumb APIs on 2026-10-26.
 # "_a" was fetched at 00:55:40 UTC and "_b" 20 seconds later.
@@ -36,7 +39,7 @@ def serve(vm, venue, market, snap=None, status=200, body=None):
 def setup(vm, deploy, project, mm, venue="upbit", market="KRW-SOPH", terms=SOPH, n_slots=4, c=None):
     """A new agreement; on contract c if given (a test can only deploy once)."""
     vm.warp("2026-10-25T23:30:00+00:00")
-    c = c or deploy(CONTRACT)
+    c = c or deploy(CONTRACT, sdk_version=GENVM)
     vm.sender = project
     vm.value = RETAINER
     aid = c.create_agreement(hexaddr(mm), venue, market, json.dumps(terms), START, HOUR, n_slots)
@@ -54,7 +57,7 @@ def check(vm, c, aid, who, venue, market, snap, at=AT_A, **kw):
 
 def test_create_agreement_validation(direct_vm, direct_deploy, direct_alice, direct_bob):
     direct_vm.warp("2026-10-25T23:30:00+00:00")
-    c = direct_deploy(CONTRACT)
+    c = direct_deploy(CONTRACT, sdk_version=GENVM)
     direct_vm.sender = direct_alice
     mm, terms = hexaddr(direct_bob), json.dumps(SOPH)
     with direct_vm.expect_revert("send the retainer"):
@@ -158,7 +161,7 @@ def test_book_moves_between_fetches_a_split_records_nothing(direct_vm, direct_de
     c, aid = setup(direct_vm, direct_deploy, direct_alice, direct_bob)
     # leader fetched _a (fails: thin ask side); a validator 20 s later sees _b, which passes.
     # v1 went along with the leader here (28 bps against 50 was "not a clear pass").
-    # Now the validator's own verdict differs, so it disagrees and the check gets no consensus.
+    # Now the validator's own verdict differs, so it votes against the leader.
     check(direct_vm, c, aid, direct_alice, "upbit", "KRW-SOPH", "a")
     direct_vm.clear_mocks()
     serve(direct_vm, "upbit", "KRW-SOPH", "b")

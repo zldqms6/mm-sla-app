@@ -5,7 +5,7 @@ import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import { TransactionHashVariant, TransactionStatus } from "genlayer-js/types";
 
-export const CONTRACT = "0x7826B076CC17E33d5a6f3F86Ab7Af0cE9492c327" as const;
+export const CONTRACT = "0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9" as const;
 export const RPC_URL = studionet.rpcUrls.default.http[0];
 export const EXPLORER = "https://explorer-studio.genlayer.com";
 export const GEN = 10n ** 18n;

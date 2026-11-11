@@ -2,7 +2,7 @@
 // with leader-error check, typed reads) and src/book.ts (the browser preview).
 //   npm run live-run            create, preview, check, wait for the term, settle
 //   npm run live-run -- resume  continue from live_run_result.json
-// Keys are demo keys in app/.env (gitignored), generated on first run, never printed.
+// Keys are demo keys in .env (gitignored), generated on first run, never printed.
 import fs from "node:fs";
 import { generatePrivateKey, createAccount } from "genlayer-js";
 import {

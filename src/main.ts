@@ -329,7 +329,7 @@ async function paintPreview(root: HTMLElement, venue: Venue, market: string, ter
   const pct = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(0)}%`;
   const room = `Headroom: spread ${pct(h.spreadPct)}, thinner side ${pct(h.depthPct)} against the limits.`;
   const verdict = h.near
-    ? `Near the line (less than ${NEAR_LINE_PCT}% from a limit). ${room} Every validator fetches its own book seconds later and must reach the same verdict; if their snapshots land on different sides, the check gets no consensus and records nothing, and you can check again.`
+    ? `Near the line (less than ${NEAR_LINE_PCT}% from a limit). ${room} Each validator fetches its own book seconds later and votes for the leader only if it reaches the same verdict; if too many snapshots land on the other side, the check gets no consensus and records nothing, and you can check again.`
     : s.obs.pass
       ? `Passing with room. ${room} Validators fetching a few seconds later should all compute PASS.`
       : `Failing with room. ${room} A check now would almost certainly record FAIL, and that slot can't be recovered.`;
@@ -833,7 +833,7 @@ function screenHow() {
         <li><b>Your timing.</b> Each check is one snapshot. One failing check fails the slot for good, so the MM has to keep the book good all the time, not just when it checks. A slot nobody checked counts as failed.</li>
       </ul>
       <h3>Same verdict, not the same numbers</h3>
-      <p>Validators fetch seconds apart, and a thin book can change a lot in that time: two real Upbit snapshots of KRW-SOPH 20 seconds apart had 0.4M and 9.8M won on the ask side. So validators don't demand the leader's exact numbers. They do demand its exact verdict: each one computes pass or fail from its own book, and the check is only recorded if they all match. When the book sits right at a limit and the snapshots land on different sides, the check gets no consensus and nothing changes; check again. The first version let the leader's snapshot decide anywhere short of a 2× contradiction, so near the threshold a leader could pick either verdict. Milestone 1 removed that. The live preview shows how much headroom the book has right now.</p>
+      <p>Validators fetch seconds apart, and a thin book can change a lot in that time: two real Upbit snapshots of KRW-SOPH 20 seconds apart had 0.4M and 9.8M won on the ask side. So validators don't demand the leader's exact numbers. They do demand its exact verdict: each one computes pass or fail from its own book and votes for the leader only if it got the same answer, so a check is recorded only when a majority reproduced the verdict. When the book sits right at a limit and too many snapshots land on the other side, the check gets no consensus and nothing changes; check again. The first version let the leader's snapshot decide anywhere short of a 2× contradiction, so near the threshold a leader could pick either verdict. Milestone 1 removed that. The live preview shows how much headroom the book has right now.</p>
       <h3>What the app reads and writes</h3>
       <p>Reads: <code>get_count</code>, <code>get_agreement</code>, <code>get_slot</code>, <code>current_slot</code>. Writes: <code>create_agreement</code> (with the retainer as value), <code>check</code>, <code>settle</code>. The order book preview is fetched by your browser directly from the exchange and is never sent anywhere. Every number on screen comes from the contract or that live fetch.</p>
       <h3>Limits</h3>

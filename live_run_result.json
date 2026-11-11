@@ -1,5 +1,5 @@
 {
-  "contract": "0x7826B076CC17E33d5a6f3F86Ab7Af0cE9492c327",
+  "contract": "0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9",
   "network": "studionet",
   "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
   "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
@@ -16,35 +16,35 @@
         "min_depth_krw": 300000000,
         "min_uptime_pct": 75
       },
-      "id": 4,
-      "start": 1794366398,
+      "id": 5,
+      "start": 1794371001,
       "create": {
         "ok": true,
-        "hash": "0xd06d1c8ce22a65426bfb6051f95569afad04a33544a74368108f7b09118b9fe8",
+        "hash": "0x04215c57100daba722f3744fcf59e3ad754092a87a5772e50d6a2c393ece51ad",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
           "IDLE",
+          "IDLE",
           "AGREE",
-          "AGREE",
-          "IDLE"
+          "AGREE"
         ],
-        "returned": "4"
+        "returned": "5"
       },
       "checks": [
         {
           "slot": 0,
           "preview": {
-            "fetchedAt": 1794366425007,
+            "fetchedAt": 1794371023610,
             "levels": 30,
             "obs": {
-              "ts": 1794366425323,
-              "mid": "1435.5",
-              "best_bid": "1435",
-              "best_ask": "1436",
-              "spread_bps": 7,
-              "bid_depth": 1037669848,
-              "ask_depth": 2014889028,
+              "ts": 1794371023633,
+              "mid": "1423.5",
+              "best_bid": "1423",
+              "best_ask": "1424",
+              "spread_bps": 8,
+              "bid_depth": 3040286190,
+              "ask_depth": 598359363,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": true
@@ -52,7 +52,7 @@
           },
           "tx": {
             "ok": true,
-            "hash": "0xc643721d91b82f30c1f6a44de77a3031b9f9f9b4281d5a65c55b63a2a0ff0dd8",
+            "hash": "0x2af7fe7cfd21cdc18519ebe512e36c356076063b92dce2e1f96b1c23af0414c4",
             "status": "ACCEPTED",
             "votes": [
               "AGREE",
@@ -61,20 +61,20 @@
               "IDLE",
               "AGREE"
             ],
-            "returned": "{\"ask_depth\":1981064774\"ask_truncated\":false\"best_ask\":\"1435.0\"\"best_bid\":\"1434.0\"\"bid_depth\":1135013802\"bid_truncated\":false\"checks\":1\"mid\":\"1434.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":7\"ts\":1794366433923}"
+            "returned": "{\"ask_depth\":602451478\"ask_truncated\":false\"best_ask\":\"1424.0\"\"best_bid\":\"1423.0\"\"bid_depth\":3035862567\"bid_truncated\":false\"checks\":1\"mid\":\"1423.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":8\"ts\":1794371029832}"
           },
-          "seconds": 16,
+          "seconds": 9,
           "slot_state": {
             "status": "pass",
             "checks": 1,
             "obs": {
-              "ts": 1794366433923,
-              "mid": "1434.5",
-              "best_bid": "1434.0",
-              "best_ask": "1435.0",
-              "spread_bps": 7,
-              "bid_depth": 1135013802,
-              "ask_depth": 1981064774,
+              "ts": 1794371029832,
+              "mid": "1423.5",
+              "best_bid": "1423.0",
+              "best_ask": "1424.0",
+              "spread_bps": 8,
+              "bid_depth": 3035862567,
+              "ask_depth": 602451478,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": true
@@ -85,7 +85,7 @@
       ],
       "settle": {
         "ok": true,
-        "hash": "0x7b94ada98387f0fc3a43278d83a5e256e58363dbc696d48e559b9c5d5d64b1cf",
+        "hash": "0x0bbc0d5f8a03925ca04c9b8eae424bc16a01185c04a2454f2f46d3277fc3cc12",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
@@ -97,7 +97,7 @@
         "returned": "{\"met_minimum\":true\"passed\":1\"slots\":1\"to_mm\":5000000000000000000\"to_project\":0}"
       },
       "final": {
-        "id": 4,
+        "id": 5,
         "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
         "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
         "venue": "upbit",
@@ -109,7 +109,7 @@
           "min_uptime_pct": 75
         },
         "retainer": "5000000000000000000",
-        "start": 1794366398,
+        "start": 1794371001,
         "interval_s": 600,
         "n_slots": 1,
         "passed": 1,
@@ -128,35 +128,35 @@
         "min_depth_krw": 3000000,
         "min_uptime_pct": 75
       },
-      "id": 5,
-      "start": 1794366407,
+      "id": 6,
+      "start": 1794371012,
       "create": {
         "ok": true,
-        "hash": "0xb88ed075c1453842bd0a479a24e57be656c635536fa352ebe82195cadb54f973",
+        "hash": "0x701afaff02eb7c3b7fcf2d0b1b562c4f4a38584d5a1ffa1bcbc29ba659057c4b",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
-          "IDLE",
-          "IDLE",
+          "AGREE",
+          "AGREE",
           "AGREE",
           "AGREE"
         ],
-        "returned": "5"
+        "returned": "6"
       },
       "checks": [
         {
           "slot": 0,
           "preview": {
-            "fetchedAt": 1794366443207,
+            "fetchedAt": 1794371035394,
             "levels": 30,
             "obs": {
-              "ts": 1794366434465,
-              "mid": "2.2015",
-              "best_bid": "2.19",
-              "best_ask": "2.213",
-              "spread_bps": 105,
-              "bid_depth": 6304137,
-              "ask_depth": 19604,
+              "ts": 1794371035857,
+              "mid": "2.212",
+              "best_bid": "2.195",
+              "best_ask": "2.229",
+              "spread_bps": 154,
+              "bid_depth": 2598884,
+              "ask_depth": 2208298,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": false
@@ -164,7 +164,7 @@
           },
           "tx": {
             "ok": true,
-            "hash": "0x257428031fea1480c0639aad13095bc62e44552cef3be5c6ed92656197778062",
+            "hash": "0xf06d153cc44dcaf0dbada6a8056030a0739bba441d91167a1def8464f5c22d97",
             "status": "ACCEPTED",
             "votes": [
               "AGREE",
@@ -173,20 +173,20 @@
               "AGREE",
               "IDLE"
             ],
-            "returned": "{\"ask_depth\":19604\"ask_truncated\":false\"best_ask\":\"2.213\"\"best_bid\":\"2.19\"\"bid_depth\":6304137\"bid_truncated\":false\"checks\":1\"mid\":\"2.2015\"\"pass\":false\"slot\":0\"slot_status\":\"fail\"\"spread_bps\":105\"ts\":1794366453667}"
+            "returned": "{\"ask_depth\":1813114\"ask_truncated\":false\"best_ask\":\"2.228\"\"best_bid\":\"2.195\"\"bid_depth\":2598884\"bid_truncated\":false\"checks\":1\"mid\":\"2.2115\"\"pass\":false\"slot\":0\"slot_status\":\"fail\"\"spread_bps\":150\"ts\":1794371040251}"
           },
-          "seconds": 20,
+          "seconds": 17,
           "slot_state": {
             "status": "fail",
             "checks": 1,
             "obs": {
-              "ts": 1794366453667,
-              "mid": "2.2015",
-              "best_bid": "2.19",
-              "best_ask": "2.213",
-              "spread_bps": 105,
-              "bid_depth": 6304137,
-              "ask_depth": 19604,
+              "ts": 1794371040251,
+              "mid": "2.2115",
+              "best_bid": "2.195",
+              "best_ask": "2.228",
+              "spread_bps": 150,
+              "bid_depth": 2598884,
+              "ask_depth": 1813114,
               "bid_truncated": false,
               "ask_truncated": false,
               "pass": false
@@ -197,19 +197,19 @@
       ],
       "settle": {
         "ok": true,
-        "hash": "0x7544e521146765ee850224221fc7a56c01e0b2d3831a9f8ef5afc503a6d580a4",
+        "hash": "0x777428ee9c07966ca73ffb0bf62b1d782f9e0134513b579d46c595d93336a33d",
         "status": "ACCEPTED",
         "votes": [
           "AGREE",
           "AGREE",
+          "AGREE",
           "IDLE",
-          "IDLE",
-          "AGREE"
+          "IDLE"
         ],
         "returned": "{\"met_minimum\":false\"passed\":0\"slots\":1\"to_mm\":0\"to_project\":5000000000000000000}"
       },
       "final": {
-        "id": 5,
+        "id": 6,
         "project": "0x842BeC3c13DfA19a369Dd9e6Cc48E0a1AD7cD4c6",
         "mm": "0xA3DA3e42CdB15e5E30F1129b120d3283c8762d8F",
         "venue": "bithumb",
@@ -221,7 +221,7 @@
           "min_uptime_pct": 75
         },
         "retainer": "5000000000000000000",
-        "start": 1794366407,
+        "start": 1794371012,
         "interval_s": 600,
         "n_slots": 1,
         "passed": 0,
