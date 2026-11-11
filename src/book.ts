@@ -112,10 +112,17 @@ export async function snapshot(venue: Venue, market: string, terms: Terms): Prom
   return { venue, market, fetchedAt: Date.now(), bids, asks, levels: (raw.orderbook_units ?? []).length, obs };
 }
 
-/** How far a measured value is from the line validators treat as "clearly" on one side (2x). */
-export function clearness(obs: Observation, terms: Terms): "clear-pass" | "clear-fail" | "borderline" {
-  const minDepth = Math.min(obs.bid_depth, obs.ask_depth);
-  if (obs.spread_bps * 2 <= terms.max_spread_bps && minDepth >= terms.min_depth_krw * 2) return "clear-pass";
-  if (obs.spread_bps >= terms.max_spread_bps * 2 || minDepth * 2 <= terms.min_depth_krw) return "clear-fail";
-  return "borderline";
+/** Below this headroom the preview warns that validators may split (a UI hint, not a contract rule). */
+export const NEAR_LINE_PCT = 20;
+
+/**
+ * Headroom to the thresholds, in % of each threshold: positive = on the passing side.
+ * Since v2 every validator must compute the same pass bit from its own fetch, so a book near
+ * the line can end with no consensus (nothing recorded) rather than with the leader's verdict.
+ */
+export function headroom(obs: Observation, terms: Terms): { spreadPct: number; depthPct: number; near: boolean } {
+  const spreadPct = ((terms.max_spread_bps - obs.spread_bps) / terms.max_spread_bps) * 100;
+  const depthPct = ((Math.min(obs.bid_depth, obs.ask_depth) - terms.min_depth_krw) / terms.min_depth_krw) * 100;
+  const binding = obs.pass ? Math.min(spreadPct, depthPct) : Math.max(-spreadPct, -depthPct);
+  return { spreadPct, depthPct, near: binding < NEAR_LINE_PCT };
 }

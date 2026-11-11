@@ -5,7 +5,7 @@ import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import { TransactionHashVariant, TransactionStatus } from "genlayer-js/types";
 
-export const CONTRACT = "0xC148A44089a37209585e9Ef57c2cf3585133F680" as const;
+export const CONTRACT = "0x7826B076CC17E33d5a6f3F86Ab7Af0cE9492c327" as const;
 export const RPC_URL = studionet.rpcUrls.default.http[0];
 export const EXPLORER = "https://explorer-studio.genlayer.com";
 export const GEN = 10n ** 18n;
@@ -261,6 +261,7 @@ export type TxProgress = (phase: "signing" | "pending", hash?: string) => void;
  * success: if the leader hit a contract UserError (e.g. "slot 2 has already
  * failed") or an exchange error, validators agree on the error and the tx is
  * still ACCEPTED with no state change. So look at the leader receipt.
+ * And a decided status other than ACCEPTED (UNDETERMINED, timeouts) is never success.
  */
 export async function sendTx(
   functionName: string,
@@ -292,6 +293,15 @@ export async function sendTx(
   const exec = leader?.execution_result;
   const status = r?.statusName ?? r?.status_name ?? "ACCEPTED";
   const votes: string[] = r?.last_round?.validator_votes_name ?? [];
+  // waitForTransactionReceipt(ACCEPTED) also returns on UNDETERMINED and the timeouts. For check()
+  // that is the normal outcome when the book sits at the threshold and validators' own snapshots
+  // give different verdicts: the leader succeeded, but nothing was recorded.
+  if (status !== "ACCEPTED" && status !== "FINALIZED") {
+    return {
+      ok: false, hash, status, code: "NO_CONSENSUS", votes,
+      message: `Validators did not reproduce the leader's result (${status}). Nothing was recorded; the slot is unchanged.`,
+    };
+  }
   if (exec !== "ERROR") return { ok: true, hash, status, votes, returned: leader?.result?.payload?.readable };
   const code: string = leader?.genvm_result?.error_code ?? "ERROR";
   const message: string =

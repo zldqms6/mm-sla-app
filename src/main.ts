@@ -23,7 +23,7 @@ import {
   type TxOutcome,
   type Venue,
 } from "./chain";
-import { BookError, MARKET_RE, clearness, snapshot, type BookSnapshot } from "./book";
+import { BookError, MARKET_RE, NEAR_LINE_PCT, headroom, snapshot, type BookSnapshot } from "./book";
 import { bpsPct, duration, esc, fromKstInput, gen, kst, krw, nowSec, parseGen, relTime, short, toKstInput } from "./format";
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
@@ -229,7 +229,7 @@ async function runTx(label: string, fn: string, args: (string | number | boolean
     const link = `<a href="${EXPLORER}/tx/${r.hash}" target="_blank" rel="noopener" class="mono">${short(r.hash ?? "", 8)}</a>`;
     dock.innerHTML = r.ok
       ? `<div class="dock-in ok"><b>${esc(label)}: accepted</b><div class="small muted">${secs}s · ${link}${r.votes.length ? ` · votes ${esc(r.votes.join(", "))}` : ""}</div><button class="icon-btn" data-close>✕</button></div>`
-      : `<div class="dock-in bad"><b>${esc(label)}: not applied</b><div class="small">${esc(r.message)}</div><div class="small muted">Validators agreed the call failed, nothing changed on chain. ${secs}s · ${link}</div><button class="icon-btn" data-close>✕</button></div>`;
+      : `<div class="dock-in bad"><b>${esc(label)}: not applied</b><div class="small">${esc(r.message)}</div><div class="small muted">${r.code === "NO_CONSENSUS" ? "No consensus" : "Validators agreed the call failed"}, nothing changed on chain. ${secs}s · ${link}</div><button class="icon-btn" data-close>✕</button></div>`;
     $("[data-close]", dock)?.addEventListener("click", () => (dock.hidden = true));
     refreshBalance();
     return r;
@@ -325,13 +325,14 @@ async function paintPreview(root: HTMLElement, venue: Venue, market: string, ter
       ${kind === "no-market" ? `<p class="small muted">A check() on this market would end with <code>[EXTERNAL] ${esc(venue)} has no market ${esc(market)}</code> and record nothing.</p>` : ""}`;
     return;
   }
-  const c = clearness(s.obs, terms);
-  const verdict =
-    c === "clear-pass"
-      ? `Clearly passing: spread at most half the limit and both sides at least twice the minimum. Validators should agree on PASS even if the book moves a little.`
-      : c === "clear-fail"
-        ? `Clearly failing: spread at least twice the limit or one side at most half the minimum. A check now would almost certainly record FAIL, and that slot can't be recovered.`
-        : `Borderline. Validators fetch a few seconds apart and only reject the leader on a clear contradiction, so the leader's own snapshot decides. ${s.obs.pass ? "It may pass or fail." : "Likely to fail."}`;
+  const h = headroom(s.obs, terms);
+  const pct = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(0)}%`;
+  const room = `Headroom: spread ${pct(h.spreadPct)}, thinner side ${pct(h.depthPct)} against the limits.`;
+  const verdict = h.near
+    ? `Near the line (less than ${NEAR_LINE_PCT}% from a limit). ${room} Every validator fetches its own book seconds later and must reach the same verdict; if their snapshots land on different sides, the check gets no consensus and records nothing, and you can check again.`
+    : s.obs.pass
+      ? `Passing with room. ${room} Validators fetching a few seconds later should all compute PASS.`
+      : `Failing with room. ${room} A check now would almost certainly record FAIL, and that slot can't be recovered.`;
   const mid = Number(s.obs.mid);
   const lo = mid * (1 - terms.band_bps / 10_000);
   const hi = mid * (1 + terms.band_bps / 10_000);
@@ -827,12 +828,12 @@ function screenHow() {
       <h3>Who you have to trust</h3>
       <ul>
         <li><b>Not the project, not the MM.</b> Neither side submits numbers. The book is read from the exchange at the moment of the check.</li>
-        <li><b>Not one validator.</b> The leader fetches the book and proposes a result. Every other validator fetches its own copy and only accepts if it agrees. A leader that claims pass over failing numbers, replays an old book, or passes off another market's book is rejected.</li>
+        <li><b>Not one validator.</b> The leader fetches the book and proposes a result. Every other validator fetches its own copy, computes its own verdict, and only accepts if it is the same. A leader that claims pass over failing numbers, replays an old book, or passes off another market's book is rejected.</li>
         <li><b>The exchange's public API.</b> If Upbit or Bithumb served wrong data to everyone, the check would measure wrong data.</li>
         <li><b>Your timing.</b> Each check is one snapshot. One failing check fails the slot for good, so the MM has to keep the book good all the time, not just when it checks. A slot nobody checked counts as failed.</li>
       </ul>
-      <h3>Why validators don't compare exact numbers</h3>
-      <p>Validators fetch seconds apart, and a thin book can change a lot in that time: two real Upbit snapshots of KRW-SOPH 20 seconds apart had 0.4M and 9.8M won on the ask side. So a validator rejects the leader only when its own book <i>clearly</i> contradicts the verdict (spread at least 2× the limit, or a side at most half the minimum, and the reverse for a fail). In between, the leader's snapshot decides. The live preview on each page tells you which zone the book is in right now.</p>
+      <h3>Same verdict, not the same numbers</h3>
+      <p>Validators fetch seconds apart, and a thin book can change a lot in that time: two real Upbit snapshots of KRW-SOPH 20 seconds apart had 0.4M and 9.8M won on the ask side. So validators don't demand the leader's exact numbers. They do demand its exact verdict: each one computes pass or fail from its own book, and the check is only recorded if they all match. When the book sits right at a limit and the snapshots land on different sides, the check gets no consensus and nothing changes; check again. The first version let the leader's snapshot decide anywhere short of a 2× contradiction, so near the threshold a leader could pick either verdict. Milestone 1 removed that. The live preview shows how much headroom the book has right now.</p>
       <h3>What the app reads and writes</h3>
       <p>Reads: <code>get_count</code>, <code>get_agreement</code>, <code>get_slot</code>, <code>current_slot</code>. Writes: <code>create_agreement</code> (with the retainer as value), <code>check</code>, <code>settle</code>. The order book preview is fetched by your browser directly from the exchange and is never sent anywhere. Every number on screen comes from the contract or that live fetch.</p>
       <h3>Limits</h3>
