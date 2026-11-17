@@ -14,11 +14,17 @@ import {
   getCurrentSlot,
   getSlot,
   onReadRetry,
+  checkBlock,
   sendTx,
+  subWindowAt,
+  subWindowCells,
+  subWindowStart,
   throwawayAddress,
   type Agreement,
+  type CheckBlock,
   type Observation,
   type SlotState,
+  type SubWindowCell,
   type Terms,
   type TxOutcome,
   type Venue,
@@ -452,6 +458,34 @@ function slotBar(a: Agreement): string {
    ===================================================================== */
 
 const slotCache = new Map<string, SlotState>();
+let rerender: ReturnType<typeof setTimeout> | undefined;
+const SW_LABEL: Record<SubWindowCell, string> = {
+  pass: "check recorded: pass",
+  fail: "check recorded: fail (this failed the slot)",
+  open: "open now, no check yet",
+  missed: "ended without a check",
+  closed: "closed: the slot had already failed",
+  future: "not started",
+};
+
+/** The contract's refusal, in words, with when the next check becomes possible. */
+function blockText(b: CheckBlock): string {
+  const why =
+    b.kind === "failed"
+      ? `Slot ${b.slot + 1} already failed, so the contract refuses further checks in it.`
+      : `Sub-window ${b.window + 1} of ${LIMITS.subWindows} in slot ${b.slot + 1} already has a check, and the contract takes one per sub-window.`;
+  const next = b.termEnds
+    ? `The term ends ${kst(b.nextAt, true)} (${relTime(b.nextAt)}); then it can be settled.`
+    : `The next ${b.nextIsSlot ? "slot" : "sub-window"} opens ${kst(b.nextAt, true)} (${relTime(b.nextAt)}).`;
+  return `${why} ${next}`;
+}
+
+function swStrip(a: Agreement, slot: number, s: SlotState | undefined, t: number): string {
+  return `<span class="sw">${subWindowCells(a, slot, s, t)
+    .map((c, k) => `<i class="${c}" title="sub-window ${k + 1}: ${SW_LABEL[c]}"></i>`)
+    .join("")}</span>`;
+}
+
 let lastCheck: { id: number; slot: number; state: SlotState; tx: TxOutcome } | null = null;
 
 async function screenAgreement(id: number, fresh = false) {
@@ -478,13 +512,16 @@ async function screenAgreement(id: number, fresh = false) {
     if (curState) slotCache.set(`${id}:${cur}`, curState);
   }
   const slotEnd = a.start + (cur + 1) * a.interval_s;
-  const blocked =
-    curState?.status === "fail"
-      ? `Slot ${cur + 1} already failed, so the contract refuses further checks in it.`
-      : curState && curState.checks >= LIMITS.maxChecksPerSlot
-        ? `Slot ${cur + 1} already has ${LIMITS.maxChecksPerSlot} checks, the maximum; it stays ${curState.status}.`
-        : "";
-  const canCheck = p.key === "running" && !blocked;
+  const block = p.key === "running" ? checkBlock(a, curState, nowSec()) : null;
+  const sw = p.key === "running" ? subWindowAt(a, nowSec()) : null;
+  const swEnd = sw ? subWindowStart(a, sw.slot, sw.window + 1) : slotEnd;
+  const canCheck = p.key === "running" && !block;
+  // repaint when the blocking sub-window (or slot) ends, so the button comes back by itself
+  clearTimeout(rerender);
+  if (block) {
+    const route = location.hash;
+    rerender = setTimeout(() => location.hash === route && screenAgreement(id, true), Math.max(1, block.nextAt - nowSec() + 2) * 1000);
+  }
 
   v.innerHTML = `
     <a href="#/" class="back small">← Agreements</a>
@@ -499,11 +536,11 @@ async function screenAgreement(id: number, fresh = false) {
           <h3>Action</h3>
           ${
             canCheck
-              ? `<p class="small">Slot <b>${cur + 1}</b> of ${a.n_slots} runs until ${kst(slotEnd)} (${relTime(slotEnd)}). A check asks validators to read the book now. One failing check fails this slot for good; at most ${LIMITS.maxChecksPerSlot} checks per slot.</p>
-                 ${curState?.status === "pass" ? `<p class="small">This slot has passed ${curState.checks} check${curState.checks === 1 ? "" : "s"} so far. Another check can still fail it.</p>` : ""}
+              ? `<p class="small">Slot <b>${cur + 1}</b> of ${a.n_slots} runs until ${kst(slotEnd)} (${relTime(slotEnd)}). It is split into ${LIMITS.subWindows} sub-windows${sw ? `; this is sub-window <b>${sw.window + 1}</b>, until ${kst(swEnd, true)} (${relTime(swEnd)})` : ""}. A check asks validators to read the book now. Each sub-window takes at most one recorded check, and one failing check fails the slot for good, so a pass early in the slot can still be overturned by a check in a later sub-window.</p>
+                 ${curState?.status === "pass" ? `<p class="small">This slot has passed ${curState.checks} check${curState.checks === 1 ? "" : "s"} so far (sub-window ${curState.windows.map((w) => w + 1).join(", ")}). Another check can still fail it.</p>` : ""}
                  <button class="btn primary" id="do-check" type="button">Check now</button>`
               : p.key === "running"
-                ? `<p class="small">${blocked} ${cur + 1 < a.n_slots ? `The next slot starts ${kst(slotEnd)} (${relTime(slotEnd)}).` : `The term ends ${kst(slotEnd)} (${relTime(slotEnd)}); then it can be settled.`}</p>`
+                ? `<p class="small">${block ? blockText(block) : ""}</p>`
               : canSettle
                 ? `<p class="small">The term ended ${relTime(endOf(a))}. Settling pays the market maker ${a.passed} / ${a.n_slots} of the retainer${pay.met ? "" : ` (but ${a.passed} / ${a.n_slots} is below the ${a.terms.min_uptime_pct}% minimum, so 0)`} and returns the rest to the project. Anyone can settle.</p>
                    <button class="btn primary" id="do-settle" type="button">Settle</button>`
@@ -521,7 +558,7 @@ async function screenAgreement(id: number, fresh = false) {
             <div><b>${unchecked}</b><span>past, unchecked</span></div>
             <div><b>${Math.max(0, a.n_slots - elapsed)}</b><span>${p.key === "running" ? "current + future" : "future"}</span></div>
           </div>
-          <p class="tiny muted">A past slot nobody checked counts as failed at settlement. A slot shown as passed can still turn to failed if a later check in the same slot fails.</p>
+          <p class="tiny muted">A past slot nobody checked counts as failed at settlement. A slot shown as passed can still turn to failed if a check in a later sub-window of the same slot fails. The marks under each slot number are its ${LIMITS.subWindows} sub-windows, at most one recorded check each.</p>
           <div class="timeline" id="timeline"></div>
           <div class="row gap mt" id="tl-nav"></div>
           <div id="slot-detail"></div>
@@ -568,6 +605,14 @@ async function screenAgreement(id: number, fresh = false) {
   $("#do-check")?.addEventListener("click", async (ev) => {
     (ev.target as HTMLButtonElement).disabled = true;
     const slotBefore = await getCurrentSlot(id).catch(() => cur);
+    // the page may have been open for a while: re-read the slot so a used sub-window isn't sent to revert
+    const fresh = slotBefore >= 0 && slotBefore < a.n_slots ? await getSlot(id, slotBefore).catch(() => undefined) : undefined;
+    const b = checkBlock(a, fresh, nowSec());
+    if (b) {
+      $("#check-result").innerHTML = `<div class="callout warn mt">${esc(blockText(b))} No transaction was sent.</div>`;
+      (ev.target as HTMLButtonElement).disabled = false;
+      return;
+    }
     const r = await runTx(`Check #${id} slot ${slotBefore + 1}`, "check", [id], 0n);
     if (!r) {
       (ev.target as HTMLButtonElement).disabled = false;
@@ -603,7 +648,8 @@ function slotFromReturn(readable?: string): number | null {
 function paintCheckResult(a: Agreement, slot: number, s: SlotState) {
   const el = $("#check-result");
   if (!el || !s.obs) return;
-  el.innerHTML = `<div class="mt">${obsBlock(s.obs, a.terms, `Last recorded check, slot ${slot + 1} (slot is ${s.status})`, ` · ${s.checks} check${s.checks === 1 ? "" : "s"} in this slot`)}</div>`;
+  const w = s.windows.length ? `, sub-window ${s.windows[s.windows.length - 1] + 1}` : "";
+  el.innerHTML = `<div class="mt">${obsBlock(s.obs, a.terms, `Last recorded check, slot ${slot + 1}${w} (slot is ${s.status})`, ` · ${s.checks} check${s.checks === 1 ? "" : "s"} in this slot`)}</div>`;
 }
 
 async function paintTimeline(a: Agreement, cur: number, from: number) {
@@ -614,13 +660,13 @@ async function paintTimeline(a: Agreement, cur: number, from: number) {
   tl.innerHTML = Array.from({ length: to - from }, (_, k) => {
     const i = from + k;
     const future = i > lastPast || cur < 0;
-    return `<button type="button" class="slot ${future ? "future" : "loading"}${i === cur ? " now" : ""}" data-slot="${i}" title="slot ${i + 1}: ${kst(a.start + i * a.interval_s)}">${i + 1}</button>`;
+    return `<button type="button" class="slot ${future ? "future" : "loading"}${i === cur ? " now" : ""}" data-slot="${i}" title="slot ${i + 1}: ${kst(a.start + i * a.interval_s)}"><b>${i + 1}</b>${future ? swStrip(a, i, undefined, nowSec()) : ""}</button>`;
   }).join("");
   const nav = $("#tl-nav");
   nav.innerHTML = `<span class="tiny muted">Slots ${from + 1}-${to} of ${a.n_slots}</span>
     ${from > 0 ? `<button class="btn ghost sm" data-go="${Math.max(0, from - SLOT_WINDOW)}" type="button">Earlier</button>` : ""}
     ${to < a.n_slots ? `<button class="btn ghost sm" data-go="${to}" type="button">Later</button>` : ""}
-    <span class="legend tiny"><i class="ok"></i>pass <i class="bad"></i>fail <i class="un"></i>unchecked <i class="fu"></i>future</span>`;
+    <span class="legend tiny"><i class="ok"></i>pass <i class="bad"></i>fail <i class="un"></i>unchecked <i class="fu"></i>future <span class="sw"><i class="open"></i></span>open sub-window</span>`;
   $$("[data-go]", nav).forEach((b) => b.addEventListener("click", () => paintTimeline(a, cur, Number(b.dataset.go))));
   $$(".slot", tl).forEach((b) =>
     b.addEventListener("click", () => {
@@ -632,7 +678,10 @@ async function paintTimeline(a: Agreement, cur: number, from: number) {
   if (cur < 0) return;
   if (a.passed + a.failed === 0) {
     // no check has ever been recorded: every started slot is unchecked, no need to read them
-    $$(".slot.loading", tl).forEach((el) => el.classList.replace("loading", "un"));
+    $$(".slot.loading", tl).forEach((el) => {
+      el.classList.replace("loading", "un");
+      el.insertAdjacentHTML("beforeend", swStrip(a, Number(el.dataset.slot), undefined, nowSec()));
+    });
     return;
   }
   const need = Array.from({ length: Math.max(0, Math.min(to - 1, lastPast) - from + 1) }, (_, k) => from + k);
@@ -653,6 +702,7 @@ async function paintTimeline(a: Agreement, cur: number, from: number) {
         if (el) {
           el.classList.remove("loading");
           el.classList.add(s.status === "pass" ? "ok" : s.status === "fail" ? "bad" : "un");
+          el.insertAdjacentHTML("beforeend", swStrip(a, n, s, nowSec()));
         }
       }),
     );
@@ -672,9 +722,18 @@ async function showSlot(a: Agreement, n: number, cur: number) {
     s = await getSlot(a.id, n);
     slotCache.set(`${a.id}:${n}`, s);
   }
+  const cells = subWindowCells(a, n, s, nowSec());
+  const swList = `<table class="obs-t sw-t"><tbody>${cells
+    .map((c, k) => {
+      const span = `${kst(subWindowStart(a, n, k), true).slice(11, 19)}-${kst(subWindowStart(a, n, k + 1), true).slice(11, 19)}`;
+      const cls = c === "pass" ? "ok-t" : c === "fail" ? "no-t" : c === "open" ? "" : "muted";
+      return `<tr><th>Sub-window ${k + 1}</th><td class="muted">${span}</td><td class="${cls}">${SW_LABEL[c]}</td></tr>`;
+    })
+    .join("")}</tbody></table>`;
+  const lastW = s.windows.length ? s.windows[s.windows.length - 1] + 1 : 0;
   box.innerHTML = s.obs
-    ? `<div class="mt">${obsBlock(s.obs, a.terms, `Slot ${n + 1}: ${s.status.toUpperCase()}`, ` · ${s.checks} check${s.checks === 1 ? "" : "s"} · last by ${short(s.by ?? "")}`)}<p class="tiny muted">${range}. Shows the last check's observation.</p></div>`
-    : `<p class="small mt">Slot ${n + 1} (${range}): no check recorded${n < cur ? ", so it counts as failed at settlement" : " yet"}.</p>`;
+    ? `<div class="mt">${swList}${obsBlock(s.obs, a.terms, `Slot ${n + 1}: ${s.status.toUpperCase()}`, ` · ${s.checks} check${s.checks === 1 ? "" : "s"} · last by ${short(s.by ?? "")}`)}<p class="tiny muted">${range}. The contract keeps only the last check's numbers (sub-window ${lastW}); any earlier check in this slot passed, or the slot would have failed then.</p></div>`
+    : `<div class="mt">${swList}<p class="small">Slot ${n + 1} (${range}): no check recorded${n < cur ? ", so it counts as failed at settlement" : " yet"}.</p></div>`;
 }
 
 /* =====================================================================
@@ -830,7 +889,7 @@ function screenHow() {
         <li><b>Not the project, not the MM.</b> Neither side submits numbers. The book is read from the exchange at the moment of the check.</li>
         <li><b>Not one validator.</b> The leader fetches the book and proposes a result. Every other validator fetches its own copy, computes its own verdict, and only accepts if it is the same. A leader that claims pass over failing numbers, replays an old book, or passes off another market's book is rejected.</li>
         <li><b>The exchange's public API.</b> If Upbit or Bithumb served wrong data to everyone, the check would measure wrong data.</li>
-        <li><b>Your timing.</b> Each check is one snapshot. One failing check fails the slot for good, so the MM has to keep the book good all the time, not just when it checks. A slot nobody checked counts as failed.</li>
+        <li><b>Your timing.</b> Each check is one snapshot. One failing check fails the slot for good, so the MM has to keep the book good all the time, not just when it checks. Each slot is split into ${LIMITS.subWindows} equal sub-windows with at most one recorded check each, so checking early and often can't use up a slot: every later sub-window still accepts a check that can fail it. A slot nobody checked counts as failed.</li>
       </ul>
       <h3>Same verdict, not the same numbers</h3>
       <p>Validators fetch seconds apart, and a thin book can change a lot in that time: two real Upbit snapshots of KRW-SOPH 20 seconds apart had 0.4M and 9.8M won on the ask side. So validators don't demand the leader's exact numbers. They do demand its exact verdict: each one computes pass or fail from its own book and votes for the leader only if it got the same answer, so a check is recorded only when a majority reproduced the verdict. When the book sits right at a limit and too many snapshots land on the other side, the check gets no consensus and nothing changes; check again. The first version let the leader's snapshot decide anywhere short of a 2× contradiction, so near the threshold a leader could pick either verdict. Milestone 1 removed that. The live preview shows how much headroom the book has right now.</p>

@@ -4,7 +4,38 @@
 
 A web app on top of the [`MarketMakerSLA`](contracts/mm_sla_escrow.py) Intelligent Contract. A token project locks a market maker's retainer, the term is cut into time slots, anyone can press **Check** during a slot, and GenLayer validators each read the live Upbit or Bithumb order book and record whether the agreed spread and depth were there. At the end, **Settle** pays the market maker the share of slots that passed and returns the rest to the project.
 
-Live contract on Studionet: [`0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9`](https://explorer-studio.genlayer.com/address/0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9) (v2, since milestone 1; v1 was `0xC148A44089a37209585e9Ef57c2cf3585133F680`)
+Live contract on Studionet: [`0x0D7367C51dBDf8De80d52A912BB7f067120eE93C`](https://explorer-studio.genlayer.com/address/0x0D7367C51dBDf8De80d52A912BB7f067120eE93C) (since milestone 2, with sub-windows; the milestone 1 contract was `0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9`, v1 was `0xC148A44089a37209585e9Ef57c2cf3585133F680`)
+
+## Milestone 2 (2026-11-17): sub-windows, so early checks can't lock in a pass
+
+**What was wrong.** The milestone 1 contract allowed at most 3 checks per slot, counted from the start of the slot. A market maker could press Check three times in the first minutes of a slot, while its book was good, and use up the slot. Any later check by the project then reverted, so the pass stood even if the book was empty for the rest of the hour.
+
+**What changed.**
+
+- **Contract** (`contracts/mm_sla_escrow.py`, the same source as the public contract repo `zldqms6/mm-sla-escrow` at `1e366e8`). Each slot is split into 3 equal sub-windows, and each sub-window takes at most one recorded check. `check()` computes the sub-window as `(now - start - slot * interval) * 3 // interval`, refuses a second check in the same one with `[EXPECTED] slot S sub-window W already has a check`, keeps the list of used sub-windows in the slot state (`windows`), and returns `window` along with `slot`, `slot_status` and `checks`. Everything else is unchanged: one failing check still fails the slot for good, and a slot nobody checked still counts as failed. So checking early no longer closes the slot: every later sub-window still accepts a check that can fail it.
+- **Redeployed for the app** at [`0x0D7367C51dBDf8De80d52A912BB7f067120eE93C`](https://explorer-studio.genlayer.com/address/0x0D7367C51dBDf8De80d52A912BB7f067120eE93C) (deploy tx [`0xe9d4…52d4`](https://explorer-studio.genlayer.com/tx/0xe9d460b1f2d8c8e5d754987d9900a41e934a869d5d033c1d6ca6686aaf5652d4)). `src/chain.ts` and `deployments.json` point to it, and glcheck confirms the deployed code matches `contracts/mm_sla_escrow.py` (`807fe54daca4ca18`). The milestone 1 contract `0x34D3…Fda9` keeps its old agreements.
+- **App.**
+  - The slot timeline shows three marks under each slot number, one per sub-window: a recorded check (pass or fail), open now, ended without a check, closed because the slot already failed, or not started. Clicking a slot lists its sub-windows with their times and results, followed by the last recorded observation. The contract stores only the last check's numbers, so earlier sub-windows show pass or fail without numbers. That is enough for the verdict: a slot's checks all passed except possibly the last, because a failing check ends checking in that slot.
+  - The Check button is only offered when the contract would accept the call. If the current sub-window already has a check, the page says so and gives the time the next sub-window (or the next slot, or the end of the term) opens, and it repaints itself at that time. The button also re-reads the slot just before sending, so a page left open doesn't send a check that would revert.
+  - The sub-window arithmetic in `src/chain.ts` (`subWindowAt`, `subWindowStart`, `subWindowCells`, `checkBlock`) mirrors the contract's integer formula. I compared `subWindowAt` with the contract's formula for every second of three slots at intervals of 600, 601, 602, 1,000, 3,600 and 86,400 s, with no mismatches.
+- **Tests:** 17, all passing (`python -m pytest -q tests`). `test_early_repeated_checks_cannot_lock_in_a_pass` replaces the old 3-check cap test. In that test the MM checks in the first minute, two more checks in the same sub-window revert, and the project's check in the last sub-window, on a thin real Upbit KRW-SOPH snapshot, fails the slot. `test_one_recorded_check_per_sub_window` covers the boundaries (00:19:59 is sub-window 0, 00:20:00 is sub-window 1 in an hourly slot) and the reset at the next slot.
+
+**Live on Studionet against the real Upbit KRW-XRP book, 2026-11-17 10:54–11:17 KST** (`npm run subwindow-run`, `scripts/subwindow_run.ts`, which goes through `src/chain.ts`. Full output with every receipt, vote list and slot state is in `subwindow_run_result.json`.) Agreement #0: ≤ 20 bps, ≥ 300M won each side within ±1%, 50% minimum uptime, 2 slots × 10 minutes (sub-windows of 200 s), 5 GEN, starting 10:56:49 KST. Every transaction was `ACCEPTED`. The contract numbers slots and sub-windows from 0 and the app from 1, so the error message below says "slot 0 sub-window 0" for the app's slot 1, sub-window 1.
+
+| Step | Sent | Result | Slot state afterwards |
+|---|---|---|---|
+| MM checks, slot 1 sub-window 1 | +17 s | **pass**: 8 bps, 1.08B / 965M, 11 s ([`0xb8a7…b49f`](https://explorer-studio.genlayer.com/tx/0xb8a7fbeec522df6598628254e3a1f5c8f30153b0dd524530cfdd51356f6bb49f)) | pass, sub-windows [0] |
+| MM checks again, same sub-window | +62 s | The app's `checkBlock` said "sub-window already has a check" and would not have sent it; the script sent it anyway. **Refused**: `[EXPECTED] slot 0 sub-window 0 already has a check`, validators agreed on the error (AGREE ×3), nothing recorded ([`0x4cce…a868`](https://explorer-studio.genlayer.com/tx/0x4cce5835e839a127c24a7266fc388aa25e4bfc0db543954f24498d73dff5a868)) | unchanged: pass, [0], 1 check |
+| Project checks, sub-window 2 | +217 s | **pass**: 8 bps, 1.13B / 1.09B ([`0x2825…010a`](https://explorer-studio.genlayer.com/tx/0x282592178fb7ca75fbf2a06fa60745dcd120d1b5f6227ef13068e2cfc1fd010a)) | pass, [0, 1] |
+| Project checks, sub-window 3 | +417 s | **pass**: 8 bps, 1.07B / 1.99B ([`0x3d78…eb1b`](https://explorer-studio.genlayer.com/tx/0x3d781328cfd79435ab13118e6d6483c7e4705ece550e46a281917c502b6eeb1b)) | pass, [0, 1, 2], 3 checks |
+| Project checks, slot 2 sub-window 2 only | +816 s | **pass**: 8 bps, 1.15B / 1.98B ([`0x9c8d…8fd2`](https://explorer-studio.genlayer.com/tx/0x9c8d508e2ac955277036c31cc98c0da3011ae901876ca45f7c1c39f91d308fd2)) | pass, [1] |
+| `settle()` | after the term | 2/2 passed → **5 GEN to the MM**, 0 back ([`0xe556…fe3a`](https://explorer-studio.genlayer.com/tx/0xe556ad1ff2bae94e8eef94af0a6e9732ff3f2628af761ca6b7268f23252bfe3a)) | settled |
+
+Each check was accepted with 3 AGREE votes and 2 IDLE validators. Read back through `src/chain.ts` after settlement, the app's marks were pass / pass / pass for slot 1 and missed / pass / missed for slot 2. A headless browser on the built app (`npm run build && npm run preview`) showed the same marks and sub-window lists on `#/a/0`, with no console errors.
+
+To check the page while a slot runs, I created agreement #1 (1 slot × 10 minutes, 1 GEN, [`0xd6ba…b03d`](https://explorer-studio.genlayer.com/tx/0xd6ba25af1797573c0dcabbb095163dd9fc1f9a51506f757c9f089affd17db03d)) and checked it once in sub-window 1 ([`0xc6d6…b205`](https://explorer-studio.genlayer.com/tx/0xc6d6132eb29a92fd4f98268acd7d0ae714b109e0ff99b4605d295b0d66f4b205), pass). On `#/a/1` the page showed no Check button and said "Sub-window 1 of 3 in slot 1 already has a check … The next sub-window opens 2026-11-17 11:22:09 KST". At 11:22:09 it repainted by itself and offered Check for sub-window 2. After the term, `settle()` paid the 1 GEN to the MM (1/1 passed, [`0x293d…0a21`](https://explorer-studio.genlayer.com/tx/0x293de3bfc2990903b77835b86a9f1720d36822f5c754854b163a2cc1d2e50a21)).
+
+**Only covered by tests, not seen live:** a later sub-window failing a slot that passed earlier (the live XRP book passed every time), and a check with no consensus. The app's guard uses the browser's clock, and the contract uses the time the leader executes the transaction. A check sent in the last seconds of a sub-window can land in the next one, which the contract accepts. If the browser clock is off by more than that margin, the contract still refuses the check, and the app shows the refusal as "not applied".
 
 ## Milestone 1 (2026-11-11): strict verdict consensus
 
@@ -55,13 +86,13 @@ A check that ends without consensus did not occur in these runs. The validator-s
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -r requirements-test.txt   # Windows: .venv\Scripts\pip
-python -m pytest -q tests        # 16 passed; no node needed. The first run downloads genvm v0.2.16 (pinned in the tests)
+python -m pytest -q tests        # 17 passed; no node needed. The first run downloads genvm v0.2.16 (pinned in the tests)
 ```
 
 
 ## Why
 
-I trade Korean stocks and crypto, and I look at Korean won order books every day. Almost every new listing on Upbit or Bithumb comes with a market maker on a monthly retainer, and the promise is always the same: tight spread, some amount of won on each side. When the month ends, the project has a screenshot of an empty book at 3 a.m. and the market maker has its own uptime report. Neither can check the other.
+Almost every new listing on Upbit or Bithumb comes with a market maker on a monthly retainer, and the promise is always the same: tight spread, some amount of won on each side. When the month ends, the project has a screenshot of an empty book at 3 a.m. and the market maker has its own uptime report. Neither can check the other.
 
 None of it is a matter of opinion. The terms are numbers and the exchange publishes the book to everyone. The contract already solved the hard part: several validators look at the book independently and write the verdict down where neither side can edit it. What was missing was a way for someone who is not a developer to use it: set up an agreement, see whether the book would pass right now, press Check, and see the payout. That is this app.
 
@@ -70,7 +101,7 @@ None of it is a matter of opinion. The terms are numbers and the exchange publis
 | Screen | What you see and do | Contract calls |
 |---|---|---|
 | **Agreements** | Every agreement, newest first: market and venue, retainer, phase (not started, slot k of n, ended, settled), passed and failed slots as a bar, unchecked past slots, terms in one line, and the amount paid to the MM once settled | `get_count`, `get_agreement` |
-| **Agreement detail** | Terms, start and end in KST, project and MM addresses. **Check now** while a slot is running, with the recorded observation afterwards (spread in bps, bid and ask depth against the minimum, pass or fail, book timestamp). If the current slot already failed or has 3 checks, the button is replaced by the reason the contract would refuse it. **Settle** once the term is over. A slot timeline (pass, fail, unchecked, future; click a slot for its last observation). Payout under `settle()`'s formula with the current counts, or the real payout after settlement. A live order book preview for this market and these terms | `get_agreement`, `current_slot`, `get_slot`, `check`, `settle` |
+| **Agreement detail** | Terms, start and end in KST, project and MM addresses. **Check now** while a slot is running, with the recorded observation afterwards (spread in bps, bid and ask depth against the minimum, pass or fail, book timestamp). If the current slot already failed or its current sub-window already has a check, the button is replaced by the reason the contract would refuse it and the time the next sub-window or slot opens. **Settle** once the term is over. A slot timeline (pass, fail, unchecked, future, with three marks per slot for its sub-windows; click a slot for its sub-windows and its last observation). Payout under `settle()`'s formula with the current counts, or the real payout after settlement. A live order book preview for this market and these terms | `get_agreement`, `current_slot`, `get_slot`, `check`, `settle` |
 | **New agreement** | Venue, market, max spread, depth band, min depth per side, min uptime, start (KST), slot length, number of slots, MM address, retainer. Validation mirrors the contract's limits. The live order book preview updates as you type, so you can see whether today's book would meet the terms you are about to lock | `create_agreement` (payable) |
 | **How it works** | The trust model in plain words: who decides, what you still trust (the exchange's public API, the timing of checks), why validators don't compare exact numbers, and the limits | none |
 
@@ -146,9 +177,11 @@ Found and fixed during the run: a won formatter bug showed 300M as "3M" next to 
   scripts/live_run.ts   the live runs above, through src/chain.ts and src/book.ts
   live_run_result.json  its output on the v2 contract (live_run_result_v1.json: the 2026-11-04 v1 run)
   scripts/contract_demo.mjs  milestone 1 contract demo: 4 agreements x 3 slots, checks, settle
+  scripts/subwindow_run.ts   milestone 2 live run of the sub-window rule, through src/chain.ts
+  subwindow_run_result.json  its output: tx hashes, votes, slot state after every check, the app's view
   contract_demo_result.json  its output: every tx hash, vote list and recorded observation
-  contracts/mm_sla_escrow.py the Intelligent Contract (v2), deployed address in deployments.json
-  tests/                gltest direct-mode tests with real order book fixtures (16)
+  contracts/mm_sla_escrow.py the Intelligent Contract (with sub-windows since milestone 2), deployed address in deployments.json
+  tests/                gltest direct-mode tests with real order book fixtures (17)
 ```
 
 The only runtime dependency is `genlayer-js`. There's no UI framework.

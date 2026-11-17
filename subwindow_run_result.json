@@ -1,0 +1,319 @@
+{
+  "contract": "0x0D7367C51dBDf8De80d52A912BB7f067120eE93C",
+  "network": "studionet",
+  "venue": "upbit",
+  "market": "KRW-XRP",
+  "terms": {
+    "max_spread_bps": 20,
+    "band_bps": 100,
+    "min_depth_krw": 300000000,
+    "min_uptime_pct": 50
+  },
+  "slot_s": 600,
+  "n_slots": 2,
+  "sub_windows": 3,
+  "project": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A",
+  "mm": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c",
+  "steps": [
+    {
+      "label": "slot 1, sub-window 1: MM",
+      "who": "mm",
+      "sent_offset_s": 17,
+      "local_slot": 0,
+      "local_window": 0,
+      "app_guard": null,
+      "tx": {
+        "ok": true,
+        "hash": "0xb8a7fbeec522df6598628254e3a1f5c8f30153b0dd524530cfdd51356f6bb49f",
+        "status": "ACCEPTED",
+        "votes": [
+          "AGREE",
+          "IDLE",
+          "AGREE",
+          "IDLE",
+          "AGREE"
+        ],
+        "returned": "{\"ask_depth\":964859765\"ask_truncated\":false\"best_ask\":\"1306.0\"\"best_bid\":\"1305.0\"\"bid_depth\":1083286496\"bid_truncated\":false\"checks\":1\"mid\":\"1305.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":8\"ts\":1794880630822\"window\":0}"
+      },
+      "seconds": 11,
+      "slot_state": {
+        "status": "pass",
+        "checks": 1,
+        "windows": [
+          0
+        ],
+        "obs": {
+          "ts": 1794880630822,
+          "mid": "1305.5",
+          "best_bid": "1305.0",
+          "best_ask": "1306.0",
+          "spread_bps": 8,
+          "bid_depth": 1083286496,
+          "ask_depth": 964859765,
+          "bid_truncated": false,
+          "ask_truncated": false,
+          "pass": true
+        },
+        "by": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c"
+      }
+    },
+    {
+      "label": "slot 1, sub-window 1 again: MM",
+      "who": "mm",
+      "sent_offset_s": 62,
+      "local_slot": 0,
+      "local_window": 0,
+      "app_guard": {
+        "kind": "window-used",
+        "slot": 0,
+        "window": 0,
+        "nextAt": 1794880809,
+        "nextIsSlot": false,
+        "termEnds": false
+      },
+      "tx": {
+        "ok": false,
+        "hash": "0x4cce5835e839a127c24a7266fc388aa25e4bfc0db543954f24498d73dff5a868",
+        "status": "ACCEPTED",
+        "code": "ERROR",
+        "message": "[EXPECTED] slot 0 sub-window 0 already has a check",
+        "votes": [
+          "AGREE",
+          "AGREE",
+          "AGREE",
+          "IDLE",
+          "IDLE"
+        ]
+      },
+      "seconds": 6,
+      "slot_state": {
+        "status": "pass",
+        "checks": 1,
+        "windows": [
+          0
+        ],
+        "obs": {
+          "ts": 1794880630822,
+          "mid": "1305.5",
+          "best_bid": "1305.0",
+          "best_ask": "1306.0",
+          "spread_bps": 8,
+          "bid_depth": 1083286496,
+          "ask_depth": 964859765,
+          "bid_truncated": false,
+          "ask_truncated": false,
+          "pass": true
+        },
+        "by": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c"
+      }
+    },
+    {
+      "label": "slot 1, sub-window 2: project",
+      "who": "project",
+      "sent_offset_s": 217,
+      "local_slot": 0,
+      "local_window": 1,
+      "app_guard": null,
+      "tx": {
+        "ok": true,
+        "hash": "0x282592178fb7ca75fbf2a06fa60745dcd120d1b5f6227ef13068e2cfc1fd010a",
+        "status": "ACCEPTED",
+        "votes": [
+          "AGREE",
+          "AGREE",
+          "AGREE",
+          "IDLE",
+          "IDLE"
+        ],
+        "returned": "{\"ask_depth\":1092205169\"ask_truncated\":false\"best_ask\":\"1307.0\"\"best_bid\":\"1306.0\"\"bid_depth\":1131236790\"bid_truncated\":false\"checks\":2\"mid\":\"1306.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":8\"ts\":1794880831222\"window\":1}"
+      },
+      "seconds": 11,
+      "slot_state": {
+        "status": "pass",
+        "checks": 2,
+        "windows": [
+          0,
+          1
+        ],
+        "obs": {
+          "ts": 1794880831222,
+          "mid": "1306.5",
+          "best_bid": "1306.0",
+          "best_ask": "1307.0",
+          "spread_bps": 8,
+          "bid_depth": 1131236790,
+          "ask_depth": 1092205169,
+          "bid_truncated": false,
+          "ask_truncated": false,
+          "pass": true
+        },
+        "by": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A"
+      }
+    },
+    {
+      "label": "slot 1, sub-window 3: project",
+      "who": "project",
+      "sent_offset_s": 417,
+      "local_slot": 0,
+      "local_window": 2,
+      "app_guard": null,
+      "tx": {
+        "ok": true,
+        "hash": "0x3d781328cfd79435ab13118e6d6483c7e4705ece550e46a281917c502b6eeb1b",
+        "status": "ACCEPTED",
+        "votes": [
+          "AGREE",
+          "IDLE",
+          "IDLE",
+          "AGREE",
+          "AGREE"
+        ],
+        "returned": "{\"ask_depth\":1985587237\"ask_truncated\":false\"best_ask\":\"1308.0\"\"best_bid\":\"1307.0\"\"bid_depth\":1074437813\"bid_truncated\":false\"checks\":3\"mid\":\"1307.5\"\"pass\":true\"slot\":0\"slot_status\":\"pass\"\"spread_bps\":8\"ts\":1794881030322\"window\":2}"
+      },
+      "seconds": 11,
+      "slot_state": {
+        "status": "pass",
+        "checks": 3,
+        "windows": [
+          0,
+          1,
+          2
+        ],
+        "obs": {
+          "ts": 1794881030322,
+          "mid": "1307.5",
+          "best_bid": "1307.0",
+          "best_ask": "1308.0",
+          "spread_bps": 8,
+          "bid_depth": 1074437813,
+          "ask_depth": 1985587237,
+          "bid_truncated": false,
+          "ask_truncated": false,
+          "pass": true
+        },
+        "by": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A"
+      }
+    },
+    {
+      "label": "slot 2, sub-window 2: project",
+      "who": "project",
+      "sent_offset_s": 816,
+      "local_slot": 1,
+      "local_window": 1,
+      "app_guard": null,
+      "tx": {
+        "ok": true,
+        "hash": "0x9c8d508e2ac955277036c31cc98c0da3011ae901876ca45f7c1c39f91d308fd2",
+        "status": "ACCEPTED",
+        "votes": [
+          "AGREE",
+          "IDLE",
+          "IDLE",
+          "AGREE",
+          "AGREE"
+        ],
+        "returned": "{\"ask_depth\":1976763465\"ask_truncated\":false\"best_ask\":\"1308.0\"\"best_bid\":\"1307.0\"\"bid_depth\":1151476665\"bid_truncated\":false\"checks\":1\"mid\":\"1307.5\"\"pass\":true\"slot\":1\"slot_status\":\"pass\"\"spread_bps\":8\"ts\":1794881431722\"window\":1}"
+      },
+      "seconds": 16,
+      "slot_state": {
+        "status": "pass",
+        "checks": 1,
+        "windows": [
+          1
+        ],
+        "obs": {
+          "ts": 1794881431722,
+          "mid": "1307.5",
+          "best_bid": "1307.0",
+          "best_ask": "1308.0",
+          "spread_bps": 8,
+          "bid_depth": 1151476665,
+          "ask_depth": 1976763465,
+          "bid_truncated": false,
+          "ask_truncated": false,
+          "pass": true
+        },
+        "by": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A"
+      }
+    }
+  ],
+  "id": 0,
+  "start": 1794880609,
+  "create": {
+    "ok": true,
+    "hash": "0x11e5bc92e4e8026c40d3ebf8f437a069504a8921dffd773ea48a09d1e290ca4e",
+    "status": "ACCEPTED",
+    "votes": [
+      "AGREE",
+      "AGREE",
+      "IDLE",
+      "AGREE",
+      "IDLE"
+    ],
+    "returned": "0"
+  },
+  "settle": {
+    "ok": true,
+    "hash": "0xe556ad1ff2bae94e8eef94af0a6e9732ff3f2628af761ca6b7268f23252bfe3a",
+    "status": "ACCEPTED",
+    "votes": [
+      "AGREE",
+      "AGREE",
+      "IDLE",
+      "IDLE",
+      "AGREE"
+    ],
+    "returned": "{\"met_minimum\":true\"passed\":2\"slots\":2\"to_mm\":5000000000000000000\"to_project\":0}"
+  },
+  "final": {
+    "id": 0,
+    "project": "0x9E07A5836900456ff7a6490dC1CF5D55b2ca2D3A",
+    "mm": "0x4cCFC124138b5F328aCd12eC6740775C0e668E9c",
+    "venue": "upbit",
+    "market": "KRW-XRP",
+    "terms": {
+      "max_spread_bps": 20,
+      "band_bps": 100,
+      "min_depth_krw": 300000000,
+      "min_uptime_pct": 50
+    },
+    "retainer": "5000000000000000000",
+    "start": 1794880609,
+    "interval_s": 600,
+    "n_slots": 2,
+    "passed": 2,
+    "failed": 0,
+    "settled": true,
+    "paid_mm": "5000000000000000000"
+  },
+  "app_view": [
+    {
+      "slot": 0,
+      "status": "pass",
+      "checks": 3,
+      "windows": [
+        0,
+        1,
+        2
+      ],
+      "cells": [
+        "pass",
+        "pass",
+        "pass"
+      ]
+    },
+    {
+      "slot": 1,
+      "status": "pass",
+      "checks": 1,
+      "windows": [
+        1
+      ],
+      "cells": [
+        "missed",
+        "pass",
+        "missed"
+      ]
+    }
+  ]
+}

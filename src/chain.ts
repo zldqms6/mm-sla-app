@@ -5,7 +5,7 @@ import { createAccount, createClient, generatePrivateKey } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import { TransactionHashVariant, TransactionStatus } from "genlayer-js/types";
 
-export const CONTRACT = "0x34D32F1F3b1181bCEb99F1A7C13F585F6841Fda9" as const;
+export const CONTRACT = "0x0D7367C51dBDf8De80d52A912BB7f067120eE93C" as const;
 export const RPC_URL = studionet.rpcUrls.default.http[0];
 export const EXPLORER = "https://explorer-studio.genlayer.com";
 export const GEN = 10n ** 18n;
@@ -17,7 +17,7 @@ export const LIMITS = {
   maxSlots: 744,
   maxStartDelay: 30 * 86_400,
   startGrace: 600, // start may be up to MIN_INTERVAL_S in the past
-  maxChecksPerSlot: 3,
+  subWindows: 3, // SUB_WINDOWS: each slot takes at most one recorded check per sub-window
 };
 
 const PK_KEY = "mmsla.burner.pk";
@@ -146,7 +146,8 @@ export type Observation = {
 export type SlotState = {
   status: "unchecked" | "pass" | "fail";
   checks: number;
-  obs?: Observation;
+  windows: number[]; // sub-windows (0-based) that have a recorded check, in order
+  obs?: Observation; // the last recorded check, i.e. the one in the highest sub-window
   by?: string;
 };
 
@@ -240,12 +241,58 @@ export function normObs(o: any): Observation {
 
 export async function getSlot(id: number, slot: number): Promise<SlotState> {
   const s = await read("get_slot", [id, slot]);
-  return { status: s.status, checks: num(s.checks), obs: s.obs ? normObs(s.obs) : undefined, by: s.by };
+  const windows = Array.isArray(s.windows) ? s.windows.map(num) : [];
+  return { status: s.status, checks: num(s.checks), windows, obs: s.obs ? normObs(s.obs) : undefined, by: s.by };
 }
 
 /** -1 before the term starts, n_slots after it ends (contract clock). */
 export async function getCurrentSlot(id: number): Promise<number> {
   return num(await read("current_slot", [id]));
+}
+
+/* ---------- sub-windows: the same arithmetic as the contract's check() ---------- */
+
+/** Unix time at which sub-window k (0..subWindows) of a slot opens; k = subWindows is the slot's end.
+ *  The contract computes window = (now - start - slot * interval) * SUB_WINDOWS // interval. */
+export function subWindowStart(a: Agreement, slot: number, k: number): number {
+  return a.start + slot * a.interval_s + Math.ceil((k * a.interval_s) / LIMITS.subWindows);
+}
+
+/** Slot and sub-window the contract would use at unix time t, or null outside the term. */
+export function subWindowAt(a: Agreement, t: number): { slot: number; window: number } | null {
+  if (t < a.start || t >= a.start + a.interval_s * a.n_slots) return null;
+  const slot = Math.floor((t - a.start) / a.interval_s);
+  return { slot, window: Math.floor(((t - a.start - slot * a.interval_s) * LIMITS.subWindows) / a.interval_s) };
+}
+
+/** pass / fail: a recorded check; open: running now, no check yet; missed: ended without a check;
+ *  closed: the slot failed earlier, so the contract takes no more checks; future: not started. */
+export type SubWindowCell = "pass" | "fail" | "open" | "missed" | "closed" | "future";
+
+export function subWindowCells(a: Agreement, slot: number, s: SlotState | undefined, t: number): SubWindowCell[] {
+  const windows = s?.windows ?? [];
+  const last = windows.length ? windows[windows.length - 1] : -1;
+  return Array.from({ length: LIMITS.subWindows }, (_, k): SubWindowCell => {
+    // a failing check fails the slot and ends checking, so only the last recorded one can be the fail
+    if (windows.includes(k)) return s?.status === "fail" && k === last ? "fail" : "pass";
+    if (s?.status === "fail") return "closed";
+    if (t < subWindowStart(a, slot, k)) return "future";
+    return t >= subWindowStart(a, slot, k + 1) ? "missed" : "open";
+  });
+}
+
+/** Why the contract would refuse a check at time t, judged from the slot state read before sending. */
+export type CheckBlock = { kind: "failed" | "window-used"; slot: number; window: number; nextAt: number; nextIsSlot: boolean; termEnds: boolean };
+
+export function checkBlock(a: Agreement, s: SlotState | undefined, t: number): CheckBlock | null {
+  const at = subWindowAt(a, t);
+  if (!at || !s) return null;
+  const used = s.windows.includes(at.window);
+  if (s.status !== "fail" && !used) return null;
+  // after a fail the next chance is the next slot; after a used sub-window, the next sub-window
+  const nextIsSlot = s.status === "fail" || at.window === LIMITS.subWindows - 1;
+  const nextAt = nextIsSlot ? subWindowStart(a, at.slot, LIMITS.subWindows) : subWindowStart(a, at.slot, at.window + 1);
+  return { kind: s.status === "fail" ? "failed" : "window-used", ...at, nextAt, nextIsSlot, termEnds: nextIsSlot && at.slot === a.n_slots - 1 };
 }
 
 /* ---------- writes ---------- */
